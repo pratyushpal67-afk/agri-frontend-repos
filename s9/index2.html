@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgriScan AI | Hyper-Realistic DNA</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;600;800&display=swap" rel="stylesheet">
+
+<style>
+/* --- Reset & Base --- */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+body { background-color: #020605; color: #e8f5e9; overflow-x: hidden; }
+
+/* --- 3D Canvas --- */
+#webgl-canvas {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
+  pointer-events: none;
+  opacity: 0; /* Starts hidden for fade-in */
+}
+
+/* --- Layout & Typography --- */
+.content { position: relative; z-index: 10; }
+section { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 0 10%; position: relative; }
+h1 { font-size: clamp(3rem, 5vw, 6rem); font-weight: 800; line-height: 1.1; max-width: 800px; letter-spacing: -0.02em; text-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+p { font-size: 1.15rem; max-width: 500px; margin-top: 25px; color: #a5d6a7; font-weight: 300; line-height: 1.6; text-shadow: 0 5px 20px rgba(0,0,0,0.8); }
+
+/* --- Navigation & Logo --- */
+nav {
+  position: fixed; top: 0; width: 100%; padding: 25px 8%; display: flex;
+  justify-content: space-between; align-items: center; z-index: 100;
+  background: linear-gradient(to bottom, rgba(2,6,5,0.9), transparent);
+}
+
+.logo-container { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.logo-svg { width: 32px; height: 32px; color: #66bb6a; filter: drop-shadow(0 0 10px rgba(102,187,106,0.8)); }
+.logo-text { font-weight: 800; font-size: 1.5rem; letter-spacing: 1px; color: #ffffff; }
+.logo-highlight { color: #66bb6a; }
+
+/* Language Switcher */
+.lang-switch {
+  display: flex; gap: 5px; background: rgba(255, 255, 255, 0.05);
+  padding: 4px; border-radius: 30px; backdrop-filter: blur(10px); 
+  border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+.lang-btn {
+  background: transparent; border: none; color: #a5d6a7; padding: 8px 18px;
+  border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;
+}
+.lang-btn.active { background: #66bb6a; color: #050d0a; box-shadow: 0 0 15px rgba(102,187,106,0.5); }
+
+/* --- Upload Section Styling --- */
+.upload-section { align-items: center; text-align: center; }
+.upload-box {
+  margin-top: 50px; padding: 60px; border: 2px dashed rgba(102, 187, 106, 0.4);
+  border-radius: 24px; background: linear-gradient(145deg, rgba(102, 187, 106, 0.05), rgba(2, 6, 5, 0.6));
+  backdrop-filter: blur(20px); cursor: pointer; transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  width: 100%; max-width: 650px; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+}
+.upload-box:hover { border-color: #66bb6a; transform: translateY(-5px); box-shadow: 0 40px 80px rgba(102, 187, 106, 0.2); }
+.upload-icon { width: 60px; height: 60px; margin-bottom: 20px; opacity: 0.8; filter: drop-shadow(0 0 15px rgba(102,187,106,0.6)); }
+
+.btn-main {
+  padding: 16px 45px; font-size: 1.1rem; font-weight: 700; color: #050d0a;
+  background: #66bb6a; border: none; border-radius: 50px; cursor: pointer;
+  margin-top: 25px; pointer-events: auto; transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 10px 20px -5px rgba(102, 187, 106, 0.5);
+}
+.btn-main:hover { transform: scale(1.05); background: #76c97a; box-shadow: 0 20px 30px -5px rgba(102, 187, 106, 0.7); }
+
+/* --- Contact Section Styling --- */
+.contact-section { align-items: flex-start; }
+.form-container { width: 100%; max-width: 550px; margin-top: 50px; display: flex; flex-direction: column; gap: 20px; }
+.glass-input {
+  width: 100%; padding: 18px 25px; background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(102, 187, 106, 0.2); border-radius: 12px; color: #fff;
+  font-size: 1rem; backdrop-filter: blur(25px); outline: none; transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.glass-input:focus { border-color: #66bb6a; background: rgba(102, 187, 106, 0.05); box-shadow: 0 15px 40px rgba(102, 187, 106, 0.2); }
+textarea.glass-input { height: 160px; resize: none; }
+.btn-submit {
+  padding: 18px; background: transparent; border: 2px solid #66bb6a; color: #66bb6a;
+  font-weight: 700; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; font-size: 1rem;
+}
+.btn-submit:hover { background: #66bb6a; color: #050d0a; box-shadow: 0 10px 30px -5px rgba(102, 187, 106, 0.6); }
+
+/* --- Reveal Utility Classes --- */
+.reveal-up { opacity: 0; }
+.hero-reveal { opacity: 0; }
+</style>
+</head>
+<body>
+
+<canvas id="webgl-canvas"></canvas>
+
+<div class="content">
+  <nav>
+    <div class="logo-container">
+      <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      <span class="logo-text">AgriScan<span class="logo-highlight">.AI</span></span>
+    </div>
+
+    <div class="lang-switch">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('hi')">HI</button>
+    </div>
+  </nav>
+
+  <section id="sec1">
+    <h1 data-key="heroTitle" class="hero-reveal">Precision Agriculture.<br>Powered by Deep Learning.</h1>
+    <p data-key="heroSub" class="hero-reveal">Scroll to dive into the neural architecture of crop disease detection.</p>
+  </section>
+
+  <section id="sec2" class="upload-section">
+    <h1 data-key="uploadTitle" class="reveal-up">Initialize Scan</h1>
+    <p data-key="uploadSub" class="reveal-up">Upload your field imagery to begin the diagnostic protocol.</p>
+    
+    <div class="upload-box reveal-up" onclick="document.getElementById('fileInput').click()">
+      <svg class="upload-icon" fill="none" stroke="#66bb6a" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+      <input type="file" id="fileInput" hidden accept="image/*">
+      <p style="margin:0 0 15px 0; color: #fff; font-weight: 600;" data-key="dropText">Click or drag image here</p>
+      <span style="color: #a5d6a7; font-size: 0.9rem;">Supports JPG, PNG (Max 50MB)</span>
+      <br>
+      <button class="btn-main" data-key="uploadBtn">Browse Files</button>
+    </div>
+  </section>
+
+  <section id="sec3" class="contact-section">
+    <h1 data-key="contactTitle" class="reveal-up">Establish Link.</h1>
+    <p data-key="contactSub" class="reveal-up">Partner with us to deploy scalable AI solutions.</p>
+    
+    <form class="form-container" onsubmit="event.preventDefault();">
+      <input type="text" class="glass-input reveal-up" placeholder="Name / Organization" data-key="formName" required>
+      <input type="email" class="glass-input reveal-up" placeholder="Secure Email" data-key="formEmail" required>
+      <textarea class="glass-input reveal-up" placeholder="Enter details..." data-key="formMessage" required></textarea>
+      <button type="submit" class="btn-submit reveal-up" data-key="formSubmit">Transmit Data</button>
+    </form>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<script>
+// --- MULTI-LANGUAGE TRANSLATION LOGIC ---
+// (Kept same as before for functionality)
+const i18n = {
+  en: { heroTitle: "Precision Agriculture.<br>Powered by Deep Learning.", heroSub: "Scroll to dive into the neural architecture of crop disease detection.", uploadTitle: "Initialize Scan", uploadSub: "Upload your field imagery to begin the diagnostic protocol.", dropText: "Click or drag image here", uploadBtn: "Browse Files", contactTitle: "Establish Link.", contactSub: "Partner with us to deploy scalable AI solutions.", formName: "Name / Organization", formEmail: "Secure Email", formMessage: "Enter details...", formSubmit: "Transmit Data" },
+  hi: { heroTitle: "सटीक कृषि।<br>डीप लर्निंग द्वारा संचालित।", heroSub: "फसल रोग का पता लगाने के लिए नीचे स्क्रॉल करें।", uploadTitle: "स्कैन प्रारंभ करें", uploadSub: "निदान शुरू करने के लिए अपने खेत की छवि अपलोड करें।", dropText: "छवि यहां क्लिक करें या खींचें", uploadBtn: "फ़ाइलें ब्राउज़ करें", contactTitle: "संपर्क स्थापित करें।", contactSub: "एआई समाधान तैनात करने के लिए हमारे साथ भागीदार बनें।", formName: "नाम / संगठन", formEmail: "सुरक्षित ईमेल", formMessage: "विवरण दर्ज करें...", formSubmit: "डेटा भेजें" }
+};
+
+function setLang(lang) {
+  document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('[data-key]').forEach(elem => {
+    const key = elem.getAttribute('data-key');
+    if (elem.tagName === 'INPUT' || elem.tagName === 'TEXTAREA') elem.placeholder = i18n[lang][key];
+    else elem.innerHTML = i18n[lang][key];
+  });
+}
+
+// --- HIGH-END 3D SCENE SETUP ---
+gsap.registerPlugin(ScrollTrigger);
+const canvas = document.querySelector('#webgl-canvas');
+const scene = new THREE.Scene();
+// Darker, denser fog for volumetric feel
+scene.fog = new THREE.FogExp2(0x020605, 0.025);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 0, 20);
+
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Capped pixel ratio for performance
+renderer.shadowMap.enabled = true; // Enable shadows
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
+
+// --- REALISTIC LIGHTING ---
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.1); // Subtle fill light
+scene.add(ambientLight);
+
+// Main directional light (Sun)
+const mainLight = new THREE.DirectionalLight(0xffffff, 1.5);
+mainLight.position.set(10, 20, 10);
+mainLight.castShadow = true;
+mainLight.shadow.mapSize.width = 2048; // High res shadows
+mainLight.shadow.mapSize.height = 2048;
+scene.add(mainLight);
+
+// Camera Light (Headlamp) - adds specular highlights as you move
+const camLight = new THREE.PointLight(0x66bb6a, 0.8, 50);
+camera.add(camLight);
+scene.add(camera);
+
+
+// --- GENERATE PHYSICAL DNA GEOMETRY ---
+const DNA_STEPS = 80; // Fewer steps, but solid geometry
+const dnaGroup = new THREE.Group(); // Group to hold all meshes
+
+// 1. Materials (PBR - Physically Based Rendering)
+// Glossy green plastic for backbone
+const backboneMat = new THREE.MeshStandardMaterial({
+  color: 0x4caf50, 
+  roughness: 0.3,
+  metalness: 0.1,
+  emissive: 0x1b5e20,
+  emissiveIntensity: 0.2
+});
+
+// Emissive (glowing) materials for rungs
+const rungMatCyan = new THREE.MeshStandardMaterial({
+  color: 0x4fc3f7, roughness: 0.4, emissive: 0x0277bd, emissiveIntensity: 0.8
+});
+const rungMatLime = new THREE.MeshStandardMaterial({
+  color: 0xcddc39, roughness: 0.4, emissive: 0x827717, emissiveIntensity: 0.8
+});
+
+// 2. Generate Curves for Backbones
+const pointsA = [];
+const pointsB = [];
+
+for(let i = 0; i <= DNA_STEPS; i++) {
+  const t = i / DNA_STEPS;
+  const y = t * 80 - 40; 
+  const angle = t * Math.PI * 10; 
+  const radius = 4;
+  pointsA.push(new THREE.Vector3(Math.cos(angle)*radius, y, Math.sin(angle)*radius));
+  pointsB.push(new THREE.Vector3(Math.cos(angle+Math.PI)*radius, y, Math.sin(angle+Math.PI)*radius));
+}
+
+const curveA = new THREE.CatmullRomCurve3(pointsA);
+const curveB = new THREE.CatmullRomCurve3(pointsB);
+
+// 3. Create Solid Tubes
+const tubeGeoA = new THREE.TubeGeometry(curveA, DNA_STEPS*2, 0.5, 12, false);
+const meshA = new THREE.Mesh(tubeGeoA, backboneMat);
+meshA.castShadow = true; meshA.receiveShadow = true;
+dnaGroup.add(meshA);
+
+const tubeGeoB = new THREE.TubeGeometry(curveB, DNA_STEPS*2, 0.5, 12, false);
+const meshB = new THREE.Mesh(tubeGeoB, backboneMat);
+meshB.castShadow = true; meshB.receiveShadow = true;
+dnaGroup.add(meshB);
+
+// 4. Create Solid Sphere Rungs
+const sphereGeo = new THREE.SphereGeometry(0.6, 16, 16);
+for(let i = 0; i < DNA_STEPS; i++) {
+  const t = i / DNA_STEPS;
+  const ptA = curveA.getPoint(t);
+  const ptB = curveB.getPoint(t);
+  
+  // Place roughly 5 spheres across the gap
+  for(let j=1; j<5; j++) {
+    const lerpT = j/5;
+    const pos = new THREE.Vector3().lerpVectors(ptA, ptB, lerpT);
+    const mat = Math.random() > 0.5 ? rungMatCyan : rungMatLime;
+    const rungMesh = new THREE.Mesh(sphereGeo, mat);
+    rungMesh.position.copy(pos);
+    rungMesh.castShadow = true;
+    rungMesh.receiveShadow = true;
+    // Add subtle random scale variation for organic feel
+    const scale = 0.8 + Math.random()*0.4;
+    rungMesh.scale.set(scale, scale, scale);
+    dnaGroup.add(rungMesh);
+  }
+}
+
+dnaGroup.rotation.z = Math.PI / 2; // Start horizontal
+scene.add(dnaGroup);
+
+
+// --- ANIMATION SYSTEMS ---
+
+// 1. Page Load Intro
+const introTl = gsap.timeline({ defaults: { ease: "power3.out", duration: 1.5 } });
+introTl
+  .to("#webgl-canvas", { opacity: 1, duration: 2.5 }) // Slower fade in for heavier geometry
+  .from("nav", { y: -50, opacity: 0, duration: 1 }, "-=2")
+  .to(".hero-reveal", { y: 0, opacity: 1, stagger: 0.2, duration: 1.2 }, "-=1");
+
+// 2. Scroll Reveal
+gsap.utils.toArray(".reveal-up").forEach((elem) => {
+  gsap.fromTo(elem, 
+    { y: 60, opacity: 0 }, 
+    {
+      y: 0, opacity: 1, duration: 1.2, ease: "power4.out",
+      scrollTrigger: { trigger: elem, start: "top 85%", toggleActions: "play none none reverse" }
+    }
+  );
+});
+
+// 3. Cinematic 3D Scroll (Using Group rotation instead of camera fly-through for solid objects)
+const tl = gsap.timeline({
+  scrollTrigger: { trigger: ".content", start: "top top", end: "bottom bottom", scrub: 1.2 }
+});
+
+// Rotate upright and zoom in
+tl.to(dnaGroup.rotation, { z: 0, y: Math.PI/6, ease: "power2.inOut" }, 0)
+  .to(camera.position, { z: 12, y: 5, ease: "power2.inOut" }, 0);
+
+// Dramatic slow spiral descent alongside the structure
+tl.to(camera.position, { y: -25, ease: "none" }, 1)
+  .to(dnaGroup.rotation, { y: Math.PI * 2.5, ease: "none" }, 1);
+
+
+// --- RENDER LOOP ---
+function animate() {
+  requestAnimationFrame(animate);
+  // Slow, heavy, organic rotation
+  dnaGroup.rotation.x += 0.0005;
+  // Subtle floating
+  dnaGroup.position.y = Math.sin(Date.now() * 0.0005) * 0.5;
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+
+</body>
+</html>

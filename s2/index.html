@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriScan AI</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="progress-bar"></div>
+
+<nav class="navbar">
+  <h2>AgriScan AI</h2>
+  <ul>
+    <li>Home</li>
+    <li>Technology</li>
+    <li>Upload</li>
+    <li>Contact</li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-text">
+    <h1>AI Powered</h1>
+    <h1 class="gradient">Crop Intelligence</h1>
+    <p>Advanced deep learning for real-time crop disease detection.</p>
+  </div>
+
+  <div class="tree-container">
+    <div class="tree-wrapper">
+      <svg class="tree-svg" viewBox="0 0 200 300">
+        <rect x="90" y="160" width="20" height="120" fill="#4e342e"/>
+        <circle cx="100" cy="120" r="70" fill="#2e7d32"/>
+        <circle cx="60" cy="130" r="50" fill="#388e3c"/>
+        <circle cx="140" cy="130" r="50" fill="#1b5e20"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="hero-text">
+    <h1>Instant</h1>
+    <h1 class="gradient">Disease Detection</h1>
+    <p>Upload a leaf image and receive disease prediction instantly.</p>
+  </div>
+</section>
+
+<section class="upload-section">
+  <h2>Upload Leaf Image</h2>
+  <div class="upload-box" id="dropArea">
+    <input type="file" id="fileInput" accept="image/*" hidden>
+    <button id="uploadBtn">Choose Image</button>
+  </div>
+  <img id="previewImage">
+</section>
+
+<footer>
+  © 2026 AgriScan AI
+</footer>
+
+<!-- GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<script src="script.js"></script>
+
+</body>
+</html>

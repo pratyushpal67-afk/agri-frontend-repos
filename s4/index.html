@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgriScan AI | Immersive</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800&display=swap" rel="stylesheet">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background-color: #050d0a;
+  color: #e8f5e9;
+  overflow-x: hidden;
+}
+
+/* 3D Canvas fixed to the background */
+#webgl-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none; /* Let clicks pass through to HTML */
+}
+
+/* Foreground Content */
+.content {
+  position: relative;
+  z-index: 10;
+}
+
+nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  padding: 30px 8%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  mix-blend-mode: difference; /* High-end contrast effect */
+  z-index: 100;
+}
+
+nav h2 {
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #66bb6a;
+}
+
+section {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 10%;
+}
+
+h1 {
+  font-size: 5vw;
+  font-weight: 800;
+  line-height: 1.1;
+  max-width: 800px;
+}
+
+p {
+  font-size: 1.2rem;
+  max-width: 500px;
+  margin-top: 20px;
+  color: #a5d6a7;
+  font-weight: 300;
+}
+
+.upload-section {
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(to top, #050d0a, transparent);
+}
+
+.upload-btn {
+  padding: 15px 40px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #050d0a;
+  background: #66bb6a;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  margin-top: 40px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  pointer-events: auto;
+}
+
+.upload-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(102, 187, 106, 0.4);
+}
+</style>
+</head>
+<body>
+
+<canvas id="webgl-canvas"></canvas>
+
+<div class="content">
+  <nav>
+    <h2>AGRISCAN.AI</h2>
+  </nav>
+
+  <section id="sec1">
+    <h1>Precision Agriculture.<br>Powered by Deep Learning.</h1>
+    <p>Scroll to dive into the neural architecture of crop disease detection.</p>
+  </section>
+
+  <section id="sec2" style="align-items: flex-end; text-align: right;">
+    <h1>Sub-cellular<br>Analysis.</h1>
+    <p style="margin-left: auto;">Detecting pathogens before visible symptoms appear using multispectral AI reconstruction.</p>
+  </section>
+
+  <section id="sec3" class="upload-section">
+    <h1>Initialize Scan</h1>
+    <p>Upload your field imagery to begin the diagnostic protocol.</p>
+    <button class="upload-btn">Upload Image</button>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+// 1. Setup Three.js Scene
+const canvas = document.querySelector('#webgl-canvas');
+const scene = new THREE.Scene();
+
+// 2. Camera Setup
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 5;
+
+// 3. Renderer Setup
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+// 4. Create an abstract "AI Plant Core" using Particles
+const geometry = new THREE.TorusKnotGeometry(1.5, 0.4, 200, 32);
+const material = new THREE.PointsMaterial({
+  size: 0.02,
+  color: 0x66bb6a,
+  transparent: true,
+  opacity: 0.8,
+  blending: THREE.AdditiveBlending
+});
+const particles = new THREE.Points(geometry, material);
+scene.add(particles);
+
+// Add some subtle lighting
+const pointLight = new THREE.PointLight(0xffffff, 1);
+pointLight.position.set(5, 5, 5);
+scene.add(pointLight);
+
+// 5. Cinematic Scroll Animations (The Magic)
+// Animate the camera and the object dynamically as the user scrolls
+const tl = gsap.timeline({
+  scrollTrigger: {
+    trigger: ".content",
+    start: "top top",
+    end: "bottom bottom",
+    scrub: 1.5 // Smooth catch-up delay for high-end feel
+  }
+});
+
+// Section 1 to Section 2 Transition
+tl.to(particles.rotation, { x: Math.PI * 1.5, y: Math.PI, ease: "power1.inOut" }, 0)
+  .to(particles.position, { x: -2, ease: "power1.inOut" }, 0)
+  .to(camera.position, { z: 3, ease: "power1.inOut" }, 0);
+
+// Section 2 to Section 3 Transition
+tl.to(particles.rotation, { x: Math.PI * 3, y: Math.PI * 2, ease: "power1.inOut" }, 1)
+  .to(particles.position, { x: 0, y: -1, ease: "power1.inOut" }, 1)
+  .to(camera.position, { z: 6, ease: "power1.inOut" }, 1)
+  .to(material.color, { r: 0.18, g: 0.49, b: 0.2, ease: "power1.inOut" }, 1); // Changes color to darker green
+
+// 6. Idle Animation (Continuous slow rotation even when not scrolling)
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const elapsedTime = clock.getElapsedTime();
+  
+  // Subtle floating effect
+  particles.position.y += Math.sin(elapsedTime) * 0.002;
+  
+  renderer.render(scene, camera);
+}
+animate();
+
+// 7. Handle Window Resize
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+
+</body>
+</html>

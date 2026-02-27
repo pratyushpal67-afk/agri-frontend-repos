@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgriScan AI | Bio-Digital Twin</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;600;800&display=swap" rel="stylesheet">
+
+<style>
+/* --- Reset & Base --- */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+body { background-color: #010403; color: #e8f5e9; overflow-x: hidden; }
+
+/* --- 3D Canvas --- */
+#webgl-canvas {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
+  pointer-events: none; opacity: 0; /* Fade in handled by JS */
+}
+
+/* --- UI Overlay --- */
+.content { position: relative; z-index: 10; }
+section { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 0 10%; position: relative; pointer-events: none; }
+/* Allow pointer events only on interactive elements */
+section > * { pointer-events: auto; }
+
+h1 { font-size: clamp(3rem, 5vw, 6rem); font-weight: 800; line-height: 1.1; max-width: 800px; letter-spacing: -0.02em; text-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+p { font-size: 1.15rem; max-width: 500px; margin-top: 25px; color: #a5d6a7; font-weight: 300; line-height: 1.6; text-shadow: 0 10px 20px rgba(0,0,0,0.8); background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; backdrop-filter: blur(5px); }
+
+/* --- Navigation --- */
+nav {
+  position: fixed; top: 0; width: 100%; padding: 25px 8%; display: flex;
+  justify-content: space-between; align-items: center; z-index: 100;
+  background: linear-gradient(to bottom, rgba(1,4,3,0.9), transparent);
+  pointer-events: auto;
+}
+
+.logo-container { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.logo-svg { width: 32px; height: 32px; color: #66bb6a; filter: drop-shadow(0 0 10px #66bb6a); }
+.logo-text { font-weight: 800; font-size: 1.5rem; letter-spacing: 1px; color: #ffffff; }
+
+.lang-switch {
+  display: flex; gap: 5px; background: rgba(255, 255, 255, 0.05);
+  padding: 4px; border-radius: 30px; backdrop-filter: blur(10px); 
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.lang-btn {
+  background: transparent; border: none; color: #a5d6a7; padding: 8px 18px;
+  border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;
+}
+.lang-btn.active { background: #66bb6a; color: #010403; }
+
+/* --- Upload Box --- */
+.upload-section { align-items: flex-end; text-align: right; padding-right: 15%; }
+.upload-box {
+  margin-top: 50px; padding: 50px; border: 1px solid rgba(102, 187, 106, 0.3);
+  border-radius: 24px; background: linear-gradient(145deg, rgba(20, 40, 30, 0.6), rgba(5, 10, 8, 0.8));
+  backdrop-filter: blur(15px); cursor: pointer; transition: all 0.4s ease;
+  width: 100%; max-width: 500px;
+}
+.upload-box:hover { border-color: #66bb6a; box-shadow: 0 0 30px rgba(102, 187, 106, 0.2); }
+.btn-main {
+  padding: 16px 45px; font-size: 1.1rem; font-weight: 700; color: #010403;
+  background: #66bb6a; border: none; border-radius: 50px; cursor: pointer;
+  margin-top: 25px; transition: transform 0.3s ease;
+}
+.btn-main:hover { transform: scale(1.05); background: #81c784; }
+
+/* --- Contact Form --- */
+.contact-section { align-items: flex-start; }
+.form-container { width: 100%; max-width: 500px; margin-top: 50px; display: flex; flex-direction: column; gap: 20px; }
+.glass-input {
+  width: 100%; padding: 18px 25px; background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(102, 187, 106, 0.2); border-radius: 12px; color: #fff;
+  backdrop-filter: blur(10px); outline: none; transition: 0.3s;
+}
+.glass-input:focus { border-color: #66bb6a; background: rgba(102, 187, 106, 0.05); }
+.btn-submit {
+  padding: 18px; background: transparent; border: 2px solid #66bb6a; color: #66bb6a;
+  font-weight: 700; border-radius: 12px; cursor: pointer; transition: 0.3s;
+}
+.btn-submit:hover { background: #66bb6a; color: #010403; }
+
+/* --- Animations --- */
+.reveal-up { opacity: 0; transform: translateY(30px); }
+</style>
+</head>
+<body>
+
+<canvas id="webgl-canvas"></canvas>
+
+<div class="content">
+  <nav>
+    <div class="logo-container">
+      <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      <span class="logo-text">AgriScan<span style="color:#66bb6a">.AI</span></span>
+    </div>
+    <div class="lang-switch">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('hi')">HI</button>
+    </div>
+  </nav>
+
+  <section id="sec1">
+    <h1 data-key="heroTitle" class="reveal-up">Precision Agriculture.<br>Powered by Deep Learning.</h1>
+    <p data-key="heroSub" class="reveal-up">Scroll to analyze the biological specimen.</p>
+  </section>
+
+  <section id="sec2" class="upload-section">
+    <h1 data-key="uploadTitle" class="reveal-up">Pest Detection</h1>
+    <p data-key="uploadSub" class="reveal-up">AI model identifies pathogens and insect damage in real-time.</p>
+    
+    <div class="upload-box reveal-up" onclick="document.getElementById('fileInput').click()">
+      <h3 style="color:#fff; margin-bottom:10px;">Upload Leaf Scan</h3>
+      <input type="file" id="fileInput" hidden accept="image/*">
+      <p style="margin:0; font-size:0.9rem;" data-key="dropText">Click or drag image here</p>
+      <button class="btn-main" data-key="uploadBtn">Analyze</button>
+    </div>
+  </section>
+
+  <section id="sec3" class="contact-section">
+    <h1 data-key="contactTitle" class="reveal-up">Establish Link.</h1>
+    <p data-key="contactSub" class="reveal-up">Deploy our sensors in your field.</p>
+    
+    <form class="form-container" onsubmit="event.preventDefault();">
+      <input type="text" class="glass-input reveal-up" placeholder="Name" data-key="formName">
+      <input type="email" class="glass-input reveal-up" placeholder="Email" data-key="formEmail">
+      <button type="submit" class="btn-submit reveal-up" data-key="formSubmit">Connect</button>
+    </form>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<script>
+// --- I18N SETUP ---
+const i18n = {
+  en: { heroTitle: "Precision Agriculture.<br>Powered by Deep Learning.", heroSub: "Scroll to analyze the biological specimen.", uploadTitle: "Pest Detection", uploadSub: "AI model identifies pathogens and insect damage in real-time.", dropText: "Click or drag image here", uploadBtn: "Analyze", contactTitle: "Establish Link.", contactSub: "Deploy our sensors in your field.", formName: "Name", formEmail: "Email", formSubmit: "Connect" },
+  hi: { heroTitle: "सटीक कृषि।<br>डीप लर्निंग द्वारा संचालित।", heroSub: "जैविक नमूने का विश्लेषण करने के लिए स्क्रॉल करें।", uploadTitle: "कीट पहचान", uploadSub: "एआई मॉडल वास्तविक समय में रोगजनकों और कीट क्षति की पहचान करता है।", dropText: "छवि यहां क्लिक करें", uploadBtn: "विश्लेषण करें", contactTitle: "संपर्क स्थापित करें।", contactSub: "अपने खेत में हमारे सेंसर तैनात करें।", formName: "नाम", formEmail: "ईमेल", formSubmit: "कनेक्ट करें" }
+};
+function setLang(lang) {
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('[data-key]').forEach(e => {
+    const k = e.getAttribute('data-key');
+    e.tagName === 'INPUT' ? e.placeholder = i18n[lang][k] : e.innerHTML = i18n[lang][k];
+  });
+}
+
+// --- 3D SCENE SETUP ---
+gsap.registerPlugin(ScrollTrigger);
+const canvas = document.querySelector('#webgl-canvas');
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x010403, 0.04);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
+camera.position.set(0, 2, 12); // Initial position
+
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+// --- LIGHTING (DRAMATIC STUDIO) ---
+const ambient = new THREE.AmbientLight(0xffffff, 0.2);
+scene.add(ambient);
+
+const mainSpot = new THREE.SpotLight(0xffffff, 2);
+mainSpot.position.set(10, 20, 10);
+mainSpot.angle = 0.5;
+mainSpot.penumbra = 0.5;
+mainSpot.castShadow = true;
+mainSpot.shadow.bias = -0.0001;
+scene.add(mainSpot);
+
+const backLight = new THREE.PointLight(0x66bb6a, 1, 20); // Green rim light
+backLight.position.set(-5, 5, -5);
+scene.add(backLight);
+
+// --- PROCEDURAL PLANT GENERATION ---
+const plantGroup = new THREE.Group();
+scene.add(plantGroup);
+
+// 1. Materials
+const stemMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.6, metalness: 0.1 });
+const leafMat = new THREE.MeshStandardMaterial({ 
+  color: 0x43a047, 
+  roughness: 0.4, 
+  metalness: 0.0,
+  side: THREE.DoubleSide,
+  emissive: 0x1b5e20,
+  emissiveIntensity: 0.1
+});
+const bugMat = new THREE.MeshStandardMaterial({ color: 0xd32f2f, roughness: 0.2, metalness: 0.5 }); // Shiny red beetle
+
+// 2. Main Stalk (Curved Tube)
+const stemPath = new THREE.CatmullRomCurve3([
+  new THREE.Vector3(0, -6, 0),
+  new THREE.Vector3(0.5, -3, 0.5),
+  new THREE.Vector3(-0.5, 0, -0.5),
+  new THREE.Vector3(0.2, 3, 0),
+  new THREE.Vector3(0, 6, 0.5)
+]);
+const stemGeo = new THREE.TubeGeometry(stemPath, 64, 0.15, 8, false);
+const stem = new THREE.Mesh(stemGeo, stemMat);
+stem.castShadow = true; stem.receiveShadow = true;
+plantGroup.add(stem);
+
+// 3. Leaf Generator
+const leafShape = new THREE.Shape();
+leafShape.moveTo(0, 0);
+leafShape.bezierCurveTo(0.5, 0.5, 1.5, 0.5, 2, 0); // Top curve
+leafShape.bezierCurveTo(1.5, -0.5, 0.5, -0.5, 0, 0); // Bottom curve
+
+const leafGeo = new THREE.ShapeGeometry(leafShape);
+// Bend the leaf slightly (Vertex manipulation)
+const posAttribute = leafGeo.attributes.position;
+for(let i=0; i<posAttribute.count; i++){
+  const x = posAttribute.getX(i);
+  posAttribute.setZ(i, Math.pow(x, 2) * -0.2); // Bend down at tip
+}
+leafGeo.computeVertexNormals();
+
+// Place leaves along stem
+const LEAF_COUNT = 12;
+for(let i=1; i<LEAF_COUNT; i++) {
+  const t = i / LEAF_COUNT;
+  const point = stemPath.getPoint(t);
+  const tangent = stemPath.getTangent(t);
+  
+  const leaf = new THREE.Mesh(leafGeo, leafMat);
+  leaf.position.copy(point);
+  
+  // Orient leaf
+  leaf.lookAt(point.clone().add(tangent));
+  leaf.rotateX(Math.PI / 2); // Face out
+  leaf.rotateY(i * 2.5); // Spiral around stem
+  leaf.rotateZ(Math.PI / 4); // Angle up slightly
+  leaf.scale.set(0.8, 0.8, 0.8);
+  
+  leaf.castShadow = true; leaf.receiveShadow = true;
+  plantGroup.add(leaf);
+  
+  // 4. Add Bugs (Pests) on random leaves
+  if(Math.random() > 0.6) { // 40% chance of bug
+    const bugGroup = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), bugMat);
+    body.scale.set(1, 1.5, 0.8);
+    bugGroup.add(body);
+    
+    // Position bug on leaf surface
+    bugGroup.position.set(0.8 + Math.random()*0.5, 0, 0.1); 
+    leaf.add(bugGroup); // Attach to leaf coordinate system
+  }
+}
+
+// --- CAMERA ANIMATION (SCROLL & ROTATE) ---
+// We use a "Camera Rig" logic. 
+// 0% Scroll: Full view
+// 50% Scroll: Zoom in and orbit around mid-section (scanning pests)
+// 100% Scroll: Pan down
+
+const tl = gsap.timeline({
+  scrollTrigger: {
+    trigger: ".content",
+    start: "top top",
+    end: "bottom bottom",
+    scrub: 1
+  }
+});
+
+// Animation Step 1: Orbit and Zoom into the plant (The "Rotate" request)
+// Moving camera in an arc around the plant
+tl.to(camera.position, {
+  x: -4, // Move left
+  y: 0,  // Focus on mid-stem
+  z: 5,  // Zoom in
+  ease: "power1.inOut",
+  onUpdate: () => camera.lookAt(0, 0, 0) // Always look at plant center
+}, 0);
+
+// Rotate the plant slightly to enhance the 3D effect
+tl.to(plantGroup.rotation, { y: Math.PI / 2, ease: "none" }, 0);
+
+// Animation Step 2: Pan down to roots for contact section
+tl.to(camera.position, {
+  x: 2,
+  y: -4,
+  z: 6,
+  ease: "power1.inOut",
+  onUpdate: () => camera.lookAt(0, -3, 0)
+}, 1);
+
+
+// --- PAGE INTRO ANIMATION ---
+const introTl = gsap.timeline();
+introTl.to("#webgl-canvas", { opacity: 1, duration: 2 })
+       .to(".reveal-up", { opacity: 1, y: 0, stagger: 0.1, duration: 1 }, "-=1.5");
+
+
+// --- RENDER LOOP ---
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const time = clock.getElapsedTime();
+  
+  // Idle Wind Animation
+  // Gently sway the whole plant
+  plantGroup.rotation.z = Math.sin(time * 0.5) * 0.05;
+  plantGroup.rotation.x = Math.cos(time * 0.3) * 0.05;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

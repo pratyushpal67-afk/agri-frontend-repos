@@ -1,0 +1,110 @@
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Inter',sans-serif;
+}
+
+body{
+  background:radial-gradient(circle at top left,#123c25,#081c15 70%);
+  color:#e8f5e9;
+  overflow-x:hidden;
+}
+
+/* Progress */
+.progress-bar{
+  position:fixed;
+  top:0;
+  left:0;
+  height:4px;
+  width:0%;
+  background:linear-gradient(90deg,#66bb6a,#2E7D32);
+  z-index:9999;
+}
+
+/* Navbar */
+nav{
+  position:fixed;
+  top:0;
+  width:100%;
+  padding:20px 8%;
+  display:flex;
+  justify-content:space-between;
+  background:rgba(0,0,0,0.4);
+  backdrop-filter:blur(10px);
+}
+
+nav ul{
+  display:flex;
+  gap:20px;
+  list-style:none;
+}
+
+.hero{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:60px;
+  padding-top:120px;
+  text-align:center;
+  flex-wrap:wrap;
+}
+
+.hero-text{
+  max-width:300px;
+}
+
+.hero-text h1{
+  font-size:42px;
+  font-weight:800;
+}
+
+.gradient{
+  background:linear-gradient(90deg,#66bb6a,#c9fdd7);
+  background-clip:text;
+  -webkit-background-clip:text;
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+}
+
+.tree-container{
+  perspective:1500px;
+}
+
+.tree-wrapper{
+  width:450px;
+  height:500px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.tree-svg{
+  width:350px;
+  filter:drop-shadow(0 30px 50px rgba(0,0,0,0.6));
+}
+
+.upload-section{
+  padding:120px;
+  text-align:center;
+}
+
+.upload-box{
+  margin-top:30px;
+  padding:50px;
+  border:2px dashed #66bb6a;
+  border-radius:20px;
+}
+
+#previewImage{
+  max-width:300px;
+  margin-top:30px;
+  display:none;
+}
+
+footer{
+  padding:40px;
+  text-align:center;
+  background:#0b2e1c;
+}
